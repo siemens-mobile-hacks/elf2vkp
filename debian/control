@@ -1,0 +1,15 @@
+Source: elf2vkp
+Section: kernel
+Priority: optional
+Maintainer: Kirill Zhumarin <kirill.zhumarin@gmail.com>
+Rules-Requires-Root: no
+Build-Depends:
+ debhelper-compat (= 12),
+ cmake,
+ quilt
+Standards-Version: 4.5.0
+
+Package: elf2vkp
+Architecture: any
+Depends:
+Description: Tool for converting .elf to .vkp patches.

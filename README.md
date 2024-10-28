@@ -8,7 +8,22 @@ This program:
 
 The main reason for the existence of this program is that the sources of the old elf2vkp.exe have been lost.
 
-# INSTALL
+# DOWNLOAD
+- Windows: download .exe in [Releases](https://github.com/siemens-mobile-hacks/elf2vkp/releases).
+- ArchLinux: `yay -S elf2vkp-git`
+- [Ubuntu/Debian/Fedora/OpenSUSE repository](https://software.opensuse.org//download.html?project=home%3AZhumarin&package=elf2vkp)
+- Old Ubuntu/Debian: download .deb in [Releases](https://github.com/siemens-mobile-hacks/elf2vkp/releases).
+- Build from sources:
+	```bash
+	# Ubuntu/Debian
+	fakeroot debian/rules binary
+
+	# OSX/Linux/Unix
+	mkdir build
+	cd build
+	cmake ..
+	make -j$(nproc)
+	```
 
 # USAGE
 ```
