@@ -1,6 +1,6 @@
 Format: 3.0 (native)
 Source: elf2vkp
-Version: 1.0.0
+Version: v1.0.0
 Binary: elf2vkp
 Maintainer: Kirill Zhumarin <kirill.zhumarin@gmail.com>
 Homepage: https://github.com/siemens-mobile-hacks/elf2vkp

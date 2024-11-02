@@ -54,6 +54,11 @@ int main(int argc, char *argv[]) {
 		.default_value(false)
 		.implicit_value(true)
 		.nargs(0);
+	program.add_argument("--chunk-size")
+		.help("Maximum bytes per one line")
+		.default_value(16)
+		.nargs(1)
+		.scan<'i', int>();
 
 	try {
 		program.parse_args(argc, argv);
@@ -68,6 +73,7 @@ int main(int argc, char *argv[]) {
 			.base = (uint32_t) stoll(program.get<std::string>("--base"), NULL, 16),
 			.oldPrintFormat = program.get<bool>("--old-print-format"),
 			.showSectionNames = program.get<bool>("--section-names"),
+			.chunkSize = program.get<int>("--chunk-size"),
 		};
 
 		auto chunks = getPatchDataFromELF(config, inputFile, fullflashFile);
@@ -123,18 +129,17 @@ std::string generatePatch(const Config &config, const std::vector<PatchData> &ch
 				"; " + c.name + eol;
 		}
 
-		uint32_t chunkSize = 16;
-		for (int i = 0; i < c.size; i += chunkSize) {
+		for (uint32_t i = 0; i < c.size; i += config.chunkSize) {
 			patchFile += config.oldPrintFormat ?
 				strprintf("0x%08X: ", c.addr + i - config.base) :
 				strprintf("%07X: ", c.addr + i - config.base);
 			if (c.oldData.size() > 0 && !oldDataEqualFF) {
-				for (int j = i; j < std::min(i + chunkSize, c.size); j++) {
+				for (int j = i; j < std::min(i + config.chunkSize, c.size); j++) {
 					patchFile += strprintf("%02X", c.oldData[j]);
 				}
 				patchFile += " ";
 			}
-			for (int j = i; j < std::min(i + chunkSize, c.size); j++) {
+			for (int j = i; j < std::min(i + config.chunkSize, c.size); j++) {
 				patchFile += strprintf("%02X", c.newData[j]);
 			}
 			patchFile += eol;

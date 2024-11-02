@@ -8,6 +8,7 @@ struct Config {
 	uint32_t base;
 	bool oldPrintFormat;
 	bool showSectionNames;
+	int chunkSize;
 };
 
 struct PatchData {
