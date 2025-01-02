@@ -15,6 +15,7 @@ struct Config {
 	bool oldPrintFormat;
 	bool showSectionNames;
 	int chunkSize;
+	bool sonyEricsson;
 };
 
 struct PatchData {
