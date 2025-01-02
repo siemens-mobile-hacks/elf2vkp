@@ -10,9 +10,11 @@ add_executable(elf2vkp src/main.cpp)
 
 target_precompile_headers(elf2vkp PRIVATE <argparse/argparse.hpp> <string> <vector>)
 
-# EXL, 02-Jan-2025: Enable high levels of compiler warnings.
+# EXL, 02-Jan-2025: Enable high levels of compiler warnings and proper optimizations flags.
 target_compile_options(elf2vkp
-	PUBLIC -O3
+	PUBLIC
+		$<$<CXX_COMPILER_ID:MSVC>:/O2>
+		$<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-O3>
 	PRIVATE
 		$<$<CXX_COMPILER_ID:MSVC>:/W3>
 		$<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra>

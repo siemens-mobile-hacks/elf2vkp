@@ -28,7 +28,11 @@ struct PatchData {
 
 std::string readFile(const std::string &path);
 std::vector<uint8_t> readBinaryFile(const std::string &path);
+#if defined(_MSC_VER)
+std::string strprintf(const char *format, ...);
+#else
 std::string strprintf(const char *format, ...)  __attribute__((format(printf, 1, 2)));
+#endif
 std::vector<Elf32_Shdr *> getSectionsFromSegment(std::vector<uint8_t> &buffer, Elf32_Ehdr *ehdr, Elf32_Phdr *phdr);
 
 std::vector<std::string> strSplit(const std::string &sep, const std::string &str);
