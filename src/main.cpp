@@ -273,7 +273,7 @@ std::string readFile(const std::string &path) {
 }
 
 std::vector<uint8_t> readBinaryFile(const std::string &path) {
-	FILE *fp = fopen(path.c_str(), "r");
+	FILE *fp = fopen(path.c_str(), "rb");
 	if (!fp) {
 		throw std::runtime_error("fopen(" + path + ") error: " + strerror(errno));
 	}
