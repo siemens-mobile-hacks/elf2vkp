@@ -59,6 +59,11 @@ int main(int argc, char *argv[]) {
 		.default_value(16)
 		.nargs(1)
 		.scan<'i', int>();
+	program.add_argument("-se", "--sony-ericsson")
+		.help("Generate .vkp in Sony Ericsson format")
+		.default_value(false)
+		.implicit_value(true)
+		.nargs(0);
 
 	try {
 		program.parse_args(argc, argv);
@@ -74,17 +79,23 @@ int main(int argc, char *argv[]) {
 			.oldPrintFormat = program.get<bool>("--old-print-format"),
 			.showSectionNames = program.get<bool>("--section-names"),
 			.chunkSize = program.get<int>("--chunk-size"),
+			.sonyEricsson = program.get<bool>("--sony-ericsson"),
 		};
 
 		auto chunks = getPatchDataFromELF(config, inputFile, fullflashFile);
 		auto patchSourceCode = generatePatch(config, chunks);
 
-		if (header != "") {
-			patchSourceCode = header + (config.oldPrintFormat ? "\r\n" : "\n") + patchSourceCode;
-		}
+		if (header != "" && headerFromFile != "" && config.sonyEricsson) {
+			patchSourceCode =
+				header + (config.oldPrintFormat ? "\r\n" : "\n") + readFile(headerFromFile) + patchSourceCode;
+		} else {
+			if (header != "") {
+				patchSourceCode = header + (config.oldPrintFormat ? "\r\n" : "\n") + patchSourceCode;
+			}
 
-		if (headerFromFile != "") {
-			patchSourceCode = readFile(headerFromFile) + patchSourceCode;
+			if (headerFromFile != "") {
+				patchSourceCode = readFile(headerFromFile) + patchSourceCode;
+			}
 		}
 
 		if (outputFile == "-") {
@@ -107,20 +118,26 @@ std::string generatePatch(const Config &config, const std::vector<PatchData> &ch
 	bool oldDataEqualFF = false;
 	std::string eol = config.oldPrintFormat ? "\r\n" : "\n";
 	for (auto &c: chunks) {
-		if (isOldDataEqualFF(c)) {
-			if (!config.oldPrintFormat && &c != &chunks[0])
+		if (config.sonyEricsson) {
+			if (!config.oldPrintFormat && &c != &chunks[0]) {
 				patchFile += eol;
-			if (!oldDataEqualFF) {
-				oldDataEqualFF = true;
-				patchFile += "#pragma enable old_equal_ff" + eol;
 			}
 		} else {
-			if (oldDataEqualFF) {
-				oldDataEqualFF = false;
-				patchFile += "#pragma disable old_equal_ff" + eol;
+			if (isOldDataEqualFF(c)) {
+				if (!config.oldPrintFormat && &c != &chunks[0])
+					patchFile += eol;
+				if (!oldDataEqualFF) {
+					oldDataEqualFF = true;
+					patchFile += "#pragma enable old_equal_ff" + eol;
+				}
+			} else {
+				if (oldDataEqualFF) {
+					oldDataEqualFF = false;
+					patchFile += "#pragma disable old_equal_ff" + eol;
+				}
+				if (!config.oldPrintFormat && &c != &chunks[0])
+					patchFile += eol;
 			}
-			if (!config.oldPrintFormat && &c != &chunks[0])
-				patchFile += eol;
 		}
 
 		if (config.showSectionNames) {
@@ -130,10 +147,16 @@ std::string generatePatch(const Config &config, const std::vector<PatchData> &ch
 		}
 
 		for (uint32_t i = 0; i < c.size; i += config.chunkSize) {
-			patchFile += config.oldPrintFormat ?
-				strprintf("0x%08X: ", c.addr + i - config.base) :
-				strprintf("%07X: ", c.addr + i - config.base);
-			if (c.oldData.size() > 0 && !oldDataEqualFF) {
+			if (config.sonyEricsson) {
+				patchFile += config.oldPrintFormat ?
+					strprintf("%08X: ", c.addr + i) :
+					strprintf("%07X: ", c.addr + i);
+			} else {
+				patchFile += config.oldPrintFormat ?
+					strprintf("0x%08X: ", c.addr + i - config.base) :
+					strprintf("%07X: ", c.addr + i - config.base);
+			}
+			if (c.oldData.size() > 0) {
 				for (uint32_t j = i; j < std::min(i + config.chunkSize, c.size); j++) {
 					patchFile += strprintf("%02X", c.oldData[j]);
 				}
@@ -146,9 +169,11 @@ std::string generatePatch(const Config &config, const std::vector<PatchData> &ch
 		}
 	}
 
-	if (oldDataEqualFF) {
-		oldDataEqualFF = false;
-		patchFile += "#pragma disable old_equal_ff" + eol;
+	if (!config.sonyEricsson) {
+		if (oldDataEqualFF) {
+			oldDataEqualFF = false;
+			patchFile += "#pragma disable old_equal_ff" + eol;
+		}
 	}
 
 	return patchFile;
