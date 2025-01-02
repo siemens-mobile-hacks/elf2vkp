@@ -4,6 +4,12 @@
 #include <cstdint>
 #include <qemu/elf.h>
 
+#if defined(_WIN32) || defined(__MINGW32__)
+	#define SIZET_FMT "%Iu"
+#else
+	#define SIZET_FMT "%zu"
+#endif
+
 struct Config {
 	uint32_t base;
 	bool oldPrintFormat;
@@ -35,6 +41,6 @@ std::string generatePatch(const Config &baseOffset, const std::vector<PatchData>
 template<typename T>
 T *getSafePtr(std::vector<uint8_t> &buffer, size_t offset) {
 	if (offset + sizeof(T) > buffer.size())
-		throw std::runtime_error(strprintf("Unexpected ELF file EOF at %d", offset + sizeof(T)));
+		throw std::runtime_error(strprintf("Unexpected ELF file EOF at " SIZET_FMT, offset + sizeof(T)));
 	return reinterpret_cast<T *>(&buffer[offset]);
 }

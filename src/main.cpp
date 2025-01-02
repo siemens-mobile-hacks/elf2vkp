@@ -134,12 +134,12 @@ std::string generatePatch(const Config &config, const std::vector<PatchData> &ch
 				strprintf("0x%08X: ", c.addr + i - config.base) :
 				strprintf("%07X: ", c.addr + i - config.base);
 			if (c.oldData.size() > 0 && !oldDataEqualFF) {
-				for (int j = i; j < std::min(i + config.chunkSize, c.size); j++) {
+				for (uint32_t j = i; j < std::min(i + config.chunkSize, c.size); j++) {
 					patchFile += strprintf("%02X", c.oldData[j]);
 				}
 				patchFile += " ";
 			}
-			for (int j = i; j < std::min(i + config.chunkSize, c.size); j++) {
+			for (uint32_t j = i; j < std::min(i + config.chunkSize, c.size); j++) {
 				patchFile += strprintf("%02X", c.newData[j]);
 			}
 			patchFile += eol;
@@ -282,7 +282,6 @@ std::vector<uint8_t> readBinaryFile(const std::string &path) {
 	std::vector<uint8_t> bytes;
 	bytes.resize(maxFileSize);
 
-	char buff[4096];
 	size_t readed = 0;
 	while (!feof(fp) && readed < maxFileSize) {
 		int ret = fread(&bytes[readed], 1, std::min(static_cast<size_t>(4096), maxFileSize - readed), fp);
