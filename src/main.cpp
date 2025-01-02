@@ -169,7 +169,7 @@ std::vector<PatchData> getPatchDataFromELF(const Config &config, const std::stri
 	FILE *fullflashFp = nullptr;
 
 	if (fullflashFile != "") {
-		fullflashFp = fopen(fullflashFile.c_str(), "r");
+		fullflashFp = fopen(fullflashFile.c_str(), "rb");
 		if (!fullflashFp)
 			throw std::runtime_error(strprintf("Can't open fullflash file: %s", fullflashFile.c_str()));
 	}
@@ -255,7 +255,7 @@ std::vector<Elf32_Shdr *> getSectionsFromSegment(std::vector<uint8_t> &buffer, E
 }
 
 std::string readFile(const std::string &path) {
-	FILE *fp = fopen(path.c_str(), "r");
+	FILE *fp = fopen(path.c_str(), "rb");
 	if (!fp) {
 		throw std::runtime_error("fopen(" + path + ") error: " + strerror(errno));
 	}
