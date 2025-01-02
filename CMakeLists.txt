@@ -18,5 +18,15 @@ target_compile_options(elf2vkp
 		$<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra>
 )
 
-# target_link_options(elf2vkp PUBLIC -static)
+# EXL, 02-Jan-2025: Enable static linking and executable stripping for MinGW.
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU" AND CMAKE_SYSTEM_NAME MATCHES "Windows")
+	target_link_options(elf2vkp PUBLIC
+		"-s"
+		"-static"
+		"-static-libgcc"
+		"-static-libstdc++"
+		"-Wl,--gc-sections"
+	)
+endif()
+
 install(TARGETS elf2vkp DESTINATION /usr/bin)

@@ -23,6 +23,12 @@ The main reason for the existence of this program is that the sources of the old
 	cd build
 	cmake ..
 	make -j$(nproc)
+	
+	# Windows (MinGW)
+	mkdir build
+	cd build
+	cmake .. -DCMAKE_TOOLCHAIN_FILE=../cmake/Toolchain-x86_64-w64-mingw32.cmake
+	make -j$(nproc)
 	```
 
 # USAGE
