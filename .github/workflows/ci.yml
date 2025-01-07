@@ -24,8 +24,10 @@ jobs:
         run: |
           fakeroot debian/rules binary
           fakeroot debian/rules clean
-          cmake -B build -DCMAKE_BUILD_TYPE=Release
-          cmake --build build -- -j$(nproc)
+          cmake -B build -DBUILD_STATIC:BOOL=TRUE
+          cmake --build build --config Release -j$(nproc)
+          cd build
+          tar -cpvzf elf2vkp.tar.gz ./elf2vkp
 
       - uses: softprops/action-gh-release@v1
         with:
@@ -33,7 +35,7 @@ jobs:
           prerelease: true
           files: |
             ../*.deb
-            build/elf2vkp
+            build/elf2vkp.tar.gz
 
   build-windows:
     runs-on: windows-2019
@@ -44,12 +46,12 @@ jobs:
 
       - name: Building elf2vkp
         run: |
-          cmake -B build -DCMAKE_BUILD_TYPE=Release
-          cmake --build build
+          cmake -B build
+          cmake --build build --config Release
 
       - uses: softprops/action-gh-release@v1
         with:
           token: "${{ secrets.GITHUB_TOKEN }}"
           prerelease: true
           files: |
-            build/elf2vkp.exe
+            build/Release/elf2vkp.exe

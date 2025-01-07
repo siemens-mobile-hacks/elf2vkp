@@ -18,8 +18,12 @@ The main reason for the existence of this program is that the sources of the old
 	fakeroot debian/rules binary
 
 	# OSX, Linux, Unix, MinGW, Windows MSVC
-	cmake -B build -DCMAKE_BUILD_TYPE=Release
-	cmake --build build
+	cmake -B build
+	cmake --build build --config Release -j$(nproc)
+
+	# Windows
+	cmake -B build
+	cmake --build build --config Release
 	```
 
 # USAGE
