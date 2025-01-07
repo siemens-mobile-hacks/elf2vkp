@@ -24,8 +24,8 @@ jobs:
         run: |
           fakeroot debian/rules binary
           fakeroot debian/rules clean
-          cmake -B build -DBUILD_STATIC:BOOL=TRUE
-          cmake --build build --config Release -j$(nproc)
+          cmake -B build -DBUILD_STATIC:BOOL=TRUE -DCMAKE_BUILD_TYPE=Release
+          cmake --build build -j$(nproc)
           cd build
           tar -cpvzf elf2vkp.tar.gz ./elf2vkp
 
