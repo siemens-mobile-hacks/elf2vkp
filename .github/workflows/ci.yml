@@ -18,12 +18,14 @@ jobs:
       - name: Installing dependencies
         run: |
           sudo apt-get update
-          sudo apt-get -y install cmake mingw-w64 mingw-w64-tools mingw-w64-i686-dev mingw-w64-x86-64-dev mingw-w64-common fakeroot build-essential debhelper
+          sudo apt-get -y install cmake fakeroot build-essential debhelper
 
       - name: Building elf2vkp
         run: |
-          tools/build_deb.sh
-          tools/build_win.sh
+          fakeroot debian/rules binary
+          fakeroot debian/rules clean
+          cmake -B build
+          cmake --build build -- -j$(nproc)
 
       - uses: softprops/action-gh-release@v1
         with:
@@ -31,4 +33,23 @@ jobs:
           prerelease: true
           files: |
             ../*.deb
-            build-win/elf2vkp.exe
+            build/elf2vkp
+
+  build-windows:
+    runs-on: windows-2019
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+
+      - name: Building elf2vkp
+        run: |
+          cmake -B build
+          cmake --build build
+
+      - uses: softprops/action-gh-release@v1
+        with:
+          token: "${{ secrets.GITHUB_TOKEN }}"
+          prerelease: true
+          files: |
+            build/elf2vkp.exe

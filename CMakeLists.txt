@@ -21,7 +21,7 @@ target_compile_options(elf2vkp
 )
 
 # EXL, 02-Jan-2025: Enable static linking and executable stripping for MinGW.
-if(CMAKE_CXX_COMPILER_ID MATCHES "GNU" AND CMAKE_SYSTEM_NAME MATCHES "Windows")
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
 	target_link_options(elf2vkp PUBLIC
 		"-s"
 		"-static"

@@ -12,10 +12,11 @@
 
 struct Config {
 	uint32_t base;
-	bool oldPrintFormat;
 	bool showSectionNames;
 	int chunkSize;
-	bool sonyEricsson;
+	bool enablePragma;
+	bool substractBaseAddr;
+	std::string eol;
 };
 
 struct PatchData {

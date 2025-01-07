@@ -8,6 +8,7 @@
 #include <fstream>
 #include <filesystem>
 #include <cassert>
+#include <regex>
 
 static const uint8_t ELF_MAGIC_HEADER[] = {
 	0x7f, 0x45, 0x4c, 0x46,  /* 0x7f, 'E', 'L', 'F' */
@@ -17,7 +18,7 @@ static const uint8_t ELF_MAGIC_HEADER[] = {
 };
 
 int main(int argc, char *argv[]) {
-	argparse::ArgumentParser program("elf2vkp", "1.0.0");
+	argparse::ArgumentParser program("elf2vkp", "1.1.0");
 
 	program.add_argument("-i", "--input")
 		.help("Path to patch.elf")
@@ -36,10 +37,11 @@ int main(int argc, char *argv[]) {
 		.help("Firmware base address")
 		.default_value("A0000000")
 		.nargs(1);
-	program.add_argument("--header")
+	program.add_argument("-H", "--header")
 		.help("Add patch header")
-		.default_value("")
-		.nargs(1);
+		.default_value<std::vector<std::string>>({})
+		.nargs(1)
+		.append();
 	program.add_argument("--header-from-file")
 		.help("Add patch header (from file)")
 		.default_value("")
@@ -49,18 +51,27 @@ int main(int argc, char *argv[]) {
 		.default_value(false)
 		.implicit_value(true)
 		.nargs(0);
-	program.add_argument("--old-print-format")
-		.help("Output .vkp with old elf2vkp.exe formatting")
-		.default_value(false)
-		.implicit_value(true)
-		.nargs(0);
 	program.add_argument("--chunk-size")
 		.help("Maximum bytes per one line")
 		.default_value(16)
 		.nargs(1)
 		.scan<'i', int>();
-	program.add_argument("-se", "--sony-ericsson")
-		.help("Generate .vkp in Sony Ericsson format")
+	program.add_argument("-F", "--format")
+		.help("Patch output format: v-klay, armdebugger, sony-ericsson")
+		.default_value("v-klay")
+		.nargs(1);
+	program.add_argument("--no-substract-base-addr")
+		.help("Disable substracting base address from patch addr")
+		.default_value(false)
+		.implicit_value(true)
+		.nargs(0);
+	program.add_argument("--no-pragma")
+		.help("Disable use of #pragma in the patch")
+		.default_value(false)
+		.implicit_value(true)
+		.nargs(0);
+	program.add_argument("--use-crlf")
+		.help("Use windows \\r\\n instead of Unix \\n")
 		.default_value(false)
 		.implicit_value(true)
 		.nargs(0);
@@ -68,35 +79,55 @@ int main(int argc, char *argv[]) {
 	try {
 		program.parse_args(argc, argv);
 
-		std::string inputFile = program.get<std::string>("--input");
-		std::string outputFile = program.get<std::string>("--output");
-		std::string fullflashFile = program.get<std::string>("--fullflash");
-		std::string header = program.get<std::string>("--header");
-		std::string headerFromFile = program.get<std::string>("--header-from-file");
+		auto inputFile = program.get<std::string>("--input");
+		auto outputFile = program.get<std::string>("--output");
+		auto fullflashFile = program.get<std::string>("--fullflash");
+		auto headers = program.get<std::vector<std::string>>("--header");
+		auto headerFromFile = program.get<std::string>("--header-from-file");
 
 		Config config = {
 			.base = (uint32_t) stoll(program.get<std::string>("--base"), NULL, 16),
-			.oldPrintFormat = program.get<bool>("--old-print-format"),
 			.showSectionNames = program.get<bool>("--section-names"),
 			.chunkSize = program.get<int>("--chunk-size"),
-			.sonyEricsson = program.get<bool>("--sony-ericsson"),
+			.enablePragma = !program.get<bool>("--no-pragma"),
+			.substractBaseAddr = !program.get<bool>("--no-substract-base-addr"),
+			.eol = program.get<bool>("--use-crlf") ? "\r\n" : "\n",
 		};
+
+		auto format = program.get<std::string>("--format");
+		if (format == "v-klay" || format == "vklay") {
+			// default format
+		} else if (format == "armdebugger" || format == "armd") {
+			// armdebugger don't support #pragma's
+			config.enablePragma = false;
+		} else if (format == "sony-ericsson" || format == "se") {
+			// SE don't support #pragma's + use absolute addresses
+			config.enablePragma = false;
+			config.substractBaseAddr = true;
+		} else {
+			throw std::runtime_error(strprintf("Unknown format type: %s", format.c_str()));
+		}
 
 		auto chunks = getPatchDataFromELF(config, inputFile, fullflashFile);
 		auto patchSourceCode = generatePatch(config, chunks);
 
-		if (header != "" && headerFromFile != "" && config.sonyEricsson) {
-			patchSourceCode =
-				header + (config.oldPrintFormat ? "\r\n" : "\n") + readFile(headerFromFile) + patchSourceCode;
-		} else {
-			if (header != "") {
-				patchSourceCode = header + (config.oldPrintFormat ? "\r\n" : "\n") + patchSourceCode;
-			}
-
-			if (headerFromFile != "") {
-				patchSourceCode = readFile(headerFromFile) + patchSourceCode;
+		std::string patchHeader;
+		for (auto &header: headers) {
+			patchHeader += header;
+			if (patchHeader[patchHeader.size() - 1] != '\n') {
+				patchHeader += "\n";
 			}
 		}
+
+		if (headerFromFile != "") {
+			patchHeader += readFile(headerFromFile);
+			if (patchHeader[patchHeader.size() - 1] != '\n') {
+				patchHeader += "\n";
+			}
+		}
+
+		patchSourceCode = patchHeader + patchSourceCode;
+		patchSourceCode = std::regex_replace(patchSourceCode, std::regex("(\\r\\n|\\n)"), config.eol);
 
 		if (outputFile == "-") {
 			std::cout << patchSourceCode;
@@ -116,47 +147,41 @@ int main(int argc, char *argv[]) {
 std::string generatePatch(const Config &config, const std::vector<PatchData> &chunks) {
 	std::string patchFile;
 	bool oldDataEqualFF = false;
-	std::string eol = config.oldPrintFormat ? "\r\n" : "\n";
 	for (auto &c: chunks) {
-		if (config.sonyEricsson) {
-			if (!config.oldPrintFormat && &c != &chunks[0]) {
-				patchFile += eol;
-			}
-		} else {
+		bool isFirstChunk = &c == &chunks[0];
+
+		if (config.enablePragma) {
 			if (isOldDataEqualFF(c)) {
-				if (!config.oldPrintFormat && &c != &chunks[0])
-					patchFile += eol;
+				if (!isFirstChunk && config.showSectionNames)
+					patchFile += "\n";
 				if (!oldDataEqualFF) {
 					oldDataEqualFF = true;
-					patchFile += "#pragma enable old_equal_ff" + eol;
+					patchFile += "#pragma enable old_equal_ff\n";
 				}
 			} else {
 				if (oldDataEqualFF) {
 					oldDataEqualFF = false;
-					patchFile += "#pragma disable old_equal_ff" + eol;
+					patchFile += "#pragma disable old_equal_ff\n";
 				}
-				if (!config.oldPrintFormat && &c != &chunks[0])
-					patchFile += eol;
+				if (!isFirstChunk && config.showSectionNames)
+					patchFile += "\n";
 			}
+		} else {
+			if (!isFirstChunk && config.showSectionNames)
+				patchFile += "\n";
 		}
 
 		if (config.showSectionNames) {
-			patchFile += config.oldPrintFormat ?
-				";" + c.name + eol :
-				"; " + c.name + eol;
+			patchFile += "; " + c.name + "\n";
 		}
 
 		for (uint32_t i = 0; i < c.size; i += config.chunkSize) {
-			if (config.sonyEricsson) {
-				patchFile += config.oldPrintFormat ?
-					strprintf("%08X: ", c.addr + i) :
-					strprintf("%07X: ", c.addr + i);
+			if (config.substractBaseAddr) {
+				patchFile += strprintf("%07X: ", c.addr + i - config.base);
 			} else {
-				patchFile += config.oldPrintFormat ?
-					strprintf("0x%08X: ", c.addr + i - config.base) :
-					strprintf("%07X: ", c.addr + i - config.base);
+				patchFile += strprintf("%08X: ", c.addr + i);
 			}
-			if (c.oldData.size() > 0) {
+			if (c.oldData.size() > 0 && !oldDataEqualFF) {
 				for (uint32_t j = i; j < std::min(i + config.chunkSize, c.size); j++) {
 					patchFile += strprintf("%02X", c.oldData[j]);
 				}
@@ -165,14 +190,14 @@ std::string generatePatch(const Config &config, const std::vector<PatchData> &ch
 			for (uint32_t j = i; j < std::min(i + config.chunkSize, c.size); j++) {
 				patchFile += strprintf("%02X", c.newData[j]);
 			}
-			patchFile += eol;
+			patchFile += "\n";
 		}
 	}
 
-	if (!config.sonyEricsson) {
+	if (config.enablePragma) {
 		if (oldDataEqualFF) {
 			oldDataEqualFF = false;
-			patchFile += "#pragma disable old_equal_ff" + eol;
+			patchFile += "#pragma disable old_equal_ff\n";
 		}
 	}
 
