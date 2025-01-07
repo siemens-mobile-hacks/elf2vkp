@@ -17,17 +17,9 @@ The main reason for the existence of this program is that the sources of the old
 	# Ubuntu/Debian
 	fakeroot debian/rules binary
 
-	# OSX/Linux/Unix
-	cmake -B build
-	cmake --build build -- -j$(nproc)
-
-	# Windows (MinGW)
-	cmake -B build -DCMAKE_TOOLCHAIN_FILE=cmake/Toolchain-x86_64-w64-mingw32.cmake
-	cmake --build build -- -j$(nproc)
-
-	# Windows (cl.exe)
-	cmake -B build
-	cmake --build build -- -j$(nproc)
+	# OSX, Linux, Unix, MinGW, Windows MSVC
+	cmake -B build -DCMAKE_BUILD_TYPE=Release
+	cmake --build build
 	```
 
 # USAGE

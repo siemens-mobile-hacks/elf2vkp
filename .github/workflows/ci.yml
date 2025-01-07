@@ -24,7 +24,7 @@ jobs:
         run: |
           fakeroot debian/rules binary
           fakeroot debian/rules clean
-          cmake -B build
+          cmake -B build -DCMAKE_BUILD_TYPE=Release
           cmake --build build -- -j$(nproc)
 
       - uses: softprops/action-gh-release@v1
@@ -44,7 +44,7 @@ jobs:
 
       - name: Building elf2vkp
         run: |
-          cmake -B build
+          cmake -B build -DCMAKE_BUILD_TYPE=Release
           cmake --build build
 
       - uses: softprops/action-gh-release@v1

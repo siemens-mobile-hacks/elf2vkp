@@ -5,8 +5,7 @@ cd $(dirname $0)/../
 
 [[ -d ./build-win ]] || mkdir build-win
 
-cd build-win
-cmake .. -DCMAKE_TOOLCHAIN_FILE=cmake/Toolchain-x86_64-w64-mingw32.cmake
-make -j$(nproc)
+cmake -B build-win -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=cmake/Toolchain-x86_64-w64-mingw32.cmake -DBUILD_STATIC:BOOL=TRUE
+cmake --build build-win -- -j$(nproc)
 
-ls -lah elf2vkp.exe
+ls -lah build-win/elf2vkp.exe
