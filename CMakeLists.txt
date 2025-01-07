@@ -7,6 +7,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 include_directories("./third_party/argparse/include" "./third_party")
 add_executable(elf2vkp src/main.cpp)
 target_precompile_headers(elf2vkp PRIVATE <argparse/argparse.hpp> <string> <vector>)
+install(TARGETS elf2vkp)
 
 if (MSVC)
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)
@@ -20,5 +21,4 @@ else()
 	endif()
 
 	target_compile_options(elf2vkp PUBLIC -Wall -Wextra -O2)
-	install(TARGETS elf2vkp DESTINATION /usr/bin)
 endif()

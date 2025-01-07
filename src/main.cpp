@@ -18,7 +18,7 @@ static const uint8_t ELF_MAGIC_HEADER[] = {
 };
 
 int main(int argc, char *argv[]) {
-	argparse::ArgumentParser program("elf2vkp", "1.1.3");
+	argparse::ArgumentParser program("elf2vkp", "1.1.4");
 
 	program.add_argument("-i", "--input")
 		.help("Path to patch.elf")
@@ -103,7 +103,7 @@ int main(int argc, char *argv[]) {
 		} else if (format == "sony-ericsson" || format == "se") {
 			// SE don't support #pragma's + use absolute addresses
 			config.enablePragma = false;
-			config.substractBaseAddr = true;
+			config.substractBaseAddr = false;
 		} else {
 			throw std::runtime_error(strprintf("Unknown format type: %s", format.c_str()));
 		}
@@ -137,7 +137,8 @@ int main(int argc, char *argv[]) {
 			out.close();
 		}
 	} catch (const std::exception &err) {
-		std::cerr << "ERROR: " << err.what() << "\n";
+		std::cerr << err.what() << std::endl;
+		std::cerr << program;
 		return 1;
 	}
 

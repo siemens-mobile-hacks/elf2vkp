@@ -14,12 +14,18 @@ The main reason for the existence of this program is that the sources of the old
 - Ubuntu/Debian: download .deb in [Releases](https://github.com/siemens-mobile-hacks/elf2vkp/releases).
 - Build from sources:
 	```bash
-	# Ubuntu/Debian
+ 	git clone https://github.com/siemens-mobile-hacks/elf2vkp
+ 	cd elf2vkp
+	git submodule init
+ 	git submodule update
+
+ 	# Ubuntu/Debian
 	fakeroot debian/rules binary
 
 	# OSX, Linux, Unix, MinGW, Windows MSVC
-	cmake -B build
-	cmake --build build --config Release -j$(nproc)
+	cmake -B build -DCMAKE_BUILD_TYPE=Release
+	cmake --build build
+	cmake --install build
 
 	# Windows
 	cmake -B build
@@ -47,6 +53,14 @@ Optional arguments:
   --no-pragma               Disable use of #pragma in the patch
   --use-crlf                Use windows \r\n instead of Unix \n
 ```
+
+### Output formats
+
+| Format                   | Description                                          |
+|--------------------------|------------------------------------------------------|
+| `--format v-klay`        | Default format.                                      |
+| `--format armdebugger`   | Shortcut for: `--no-pragma`                          |
+| `--format sony-ericsson` | Shortcut for: `--no-substract-base-addr --no-pragma` |
 
 ### Convert patch.elf to patch.vkp with old data
 ```
