@@ -54,7 +54,7 @@ jobs:
           git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git pull
-          cp ../elf2vkp.rb tap/Formula/elf2vkp.rb
+          cp ../elf2vkp.rb Formula/elf2vkp.rb
           git add Formula/elf2vkp.rb
           git push --set-upstream origin main
 
