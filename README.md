@@ -23,7 +23,7 @@ The main reason for the existence of this program is that the sources of the old
  	# Ubuntu/Debian
 	fakeroot debian/rules binary
 
-	# OSX, Linux, Unix, MinGW, Windows MSVC
+	# OSX, Linux, Unix, MinGW
 	cmake -B build -DCMAKE_BUILD_TYPE=Release
 	cmake --build build
 	cmake --install build
