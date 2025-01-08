@@ -56,6 +56,7 @@ jobs:
           git pull
           cp ../elf2vkp.rb Formula/elf2vkp.rb
           git add Formula/elf2vkp.rb
+          git commit -m "elf2vkp: $GITHUB_REF_NAME"
           git push --set-upstream origin main
 
   build-windows:
