@@ -18,7 +18,7 @@ static const uint8_t ELF_MAGIC_HEADER[] = {
 };
 
 int main(int argc, char *argv[]) {
-	argparse::ArgumentParser program("elf2vkp", "1.1.4");
+	argparse::ArgumentParser program("elf2vkp", "1.1.5");
 
 	program.add_argument("-i", "--input")
 		.help("Path to patch.elf")

@@ -29,6 +29,16 @@ jobs:
           cd build
           tar -cpvzf elf2vkp.tar.gz ./elf2vkp
 
+      - name: Update Homebrew Formula
+        uses: izumin5210/action-homebrew-tap@releases/v0
+        with:
+          tap: siemens-mobile-hacks/homebrew-tap
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tap-token: ${{ secrets.TAP_GITHUB_TOKEN }}
+          release-branch: main
+          formula: elf2vkp.rb
+          commit-message: Brew formula update for elf2vkp version ${{ env.RELEASE_VERSION }}
+
       - uses: softprops/action-gh-release@v1
         with:
           token: "${{ secrets.GITHUB_TOKEN }}"

@@ -11,6 +11,7 @@ The main reason for the existence of this program is that the sources of the old
 # DOWNLOAD
 - Windows: download .exe in [Releases](https://github.com/siemens-mobile-hacks/elf2vkp/releases).
 - ArchLinux: `yay -S elf2vkp-git`
+- OSX: `brew install siemens-mobile-hacks/tap/elf2vkp`
 - Ubuntu/Debian: download .deb in [Releases](https://github.com/siemens-mobile-hacks/elf2vkp/releases).
 - Build from sources:
 	```bash
