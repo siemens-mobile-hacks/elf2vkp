@@ -29,16 +29,6 @@ jobs:
           cd build
           tar -cpvzf elf2vkp.tar.gz ./elf2vkp
 
-      - name: Update Homebrew Formula
-        uses: izumin5210/action-homebrew-tap@releases/v0
-        with:
-          tap: siemens-mobile-hacks/homebrew-tap
-          token: ${{ secrets.GITHUB_TOKEN }}
-          tap-token: ${{ secrets.TAP_GITHUB_TOKEN }}
-          release-branch: main
-          formula: elf2vkp.rb
-          commit-message: Brew formula update for elf2vkp version ${{ env.RELEASE_VERSION }}
-
       - uses: softprops/action-gh-release@v1
         with:
           token: "${{ secrets.GITHUB_TOKEN }}"
@@ -46,6 +36,27 @@ jobs:
           files: |
             ../*.deb
             build/elf2vkp.tar.gz
+
+      - name: Check out homebrew tap
+        uses: actions/checkout@v3
+        with:
+          repository: siemens-mobile-hacks/homebrew-tap
+          path: ./tap
+          token: ${{ secrets.TAP_GITHUB_TOKEN }}
+
+      - name: Generate formula
+        run: |
+          sed -i "s/RELEASE_TAG_NAME/$GITHUB_REF_NAME/g" elf2vkp.rb
+          sed -i "s/RELEASE_TAG_HASH/$GITHUB_SHA/g" elf2vkp.rb
+          cat elf2vkp.rb
+
+          cd tap
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git pull
+          cp ../elf2vkp.rb tap/Formula/elf2vkp.rb
+          git add Formula/elf2vkp.rb
+          git push --set-upstream origin main
 
   build-windows:
     runs-on: windows-2019
